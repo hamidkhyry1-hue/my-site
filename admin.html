@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پنل مدیریت</title>
+  <style>
+    body { font-family: Tahoma, Arial, sans-serif; background: #f0f0f0; margin: 0; padding: 20px; }
+    .box { max-width: 520px; margin: 30px auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    label { display: block; margin: 16px 0 6px; font-weight: bold; }
+    input[type=text], input[type=password], select { width: 100%; padding: 10px; font-size: 16px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; }
+    input[type=color] { width: 100%; height: 44px; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; }
+    button { margin-top: 18px; width: 100%; padding: 12px; font-size: 16px; background: #2f6bff; color: #fff; border: 0; border-radius: 8px; cursor: pointer; }
+    button.gray { background: #777; margin-top: 10px; }
+    #panel { display: none; }
+    #msg { margin-top: 14px; text-align: center; color: green; }
+    #err { margin-top: 10px; text-align: center; color: red; }
+  </style>
+</head>
+<body>
+
+  <div class="box" id="login">
+    <h2>ورود مالک سایت</h2>
+    <label>رمز عبور</label>
+    <input type="password" id="pass">
+    <button onclick="login()">ورود</button>
+    <div id="err"></div>
+  </div>
+
+  <div class="box" id="panel">
+    <h2>تنظیمات سایت</h2>
+    <div id="fields"></div>
+    <button class="gray" onclick="clearImage()">حذف عکس پس‌زمینه</button>
+    <button onclick="save()">ذخیره تغییرات</button>
+    <button class="gray" onclick="resetAll()">برگشت به حالت اول</button>
+    <button class="gray" onclick="location.href='index.html'">دیدن سایت</button>
+    <div id="msg"></div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    var PASSWORD = "1234";
+    var imageData = "";
+
+    FIELDS.forEach(function (f) {
+      var box = document.getElementById("fields");
+      var lab = document.createElement("label");
+      lab.innerText = f[2];
+      box.appendChild(lab);
+      var inp;
+      if (f[0] === "font") {
+        inp = document.createElement("select");
+        FONTS.forEach(function (o) {
+          var op = document.createElement("option");
+          op.value = o[1];
+          op.innerText = o[0];
+          inp.appendChild(op);
+        });
+      } else if (f[0] === "image") {
+        inp = document.createElement("input");
+        inp.type = "file";
+        inp.accept = "image/*";
+        inp.onchange = function () {
+          var file = inp.files[0];
+          if (!file) return;
+          if (file.size > 2000000) {
+            alert("عکس باید کمتر از ۲ مگابایت باشد");
+            inp.value = "";
+            return;
+          }
+          var r = new FileReader();
+          r.onload = function () { imageData = r.result; };
+          r.readAsDataURL(file);
+        };
+      } else {
+        inp = document.createElement("input");
+        inp.type = f[0] === "color" ? "color" : "text";
+      }
+      inp.id = "f_" + f[1];
+      box.appendChild(inp);
+    });
+
+    function login() {
+      if (document.getElementById("pass").value === PASSWORD) {
+        document.getElementById("login").style.display = "none";
+        document.getElementById("panel").style.display = "block";
+        loadForm();
+      } else {
+        document.getElementById("err").innerText = "رمز اشتباه است";
+      }
+    }
+
+    function loadForm() {
+      var s = getSettings();
+      FIELDS.forEach(function (f) {
+        if (f[0] === "image") { imageData = s.heroImage; return; }
+        document.getElementById("f_" + f[1]).value = s[f[1]];
+      });
+    }
+
+    function save() {
+      var s = {};
+      FIELDS.forEach(function (f) {
+        if (f[0] === "image") { s.heroImage = imageData; return; }
+        s[f[1]] = document.getElementById("f_" + f[1]).value;
+      });
+      try {
+        localStorage.setItem(STORE, JSON.stringify(s));
+        document.getElementById("msg").innerText = "ذخیره شد! حالا سایت رو ببین.";
+      } catch (e) {
+        document.getElementById("msg").innerText = "ذخیره نشد. احتمالاً عکس خیلی بزرگه.";
+      }
+    }
+
+    function clearImage() {
+      imageData = "";
+      document.getElementById("f_heroImage").value = "";
+      document.getElementById("msg").innerText = "عکس حذف شد. ذخیره رو بزن.";
+    }
+
+    function resetAll() {
+      localStorage.removeItem(STORE);
+      loadForm();
+      document.getElementById("msg").innerText = "به حالت اول برگشت.";
+    }
+  </script>
+</body>
+</html>
